@@ -1,0 +1,59 @@
+[
+  {
+    "prefix": "exl",
+    "body": [
+      "IO.inspect(\"---------------------------------------\")",
+      "IO.inspect(${1}, label: \"${2}\")",
+      "IO.inspect(\"---------------------------------------\")"
+    ],
+    "description": "Insert IO.inspect surrounded by decorative border",
+    "language": "elixir"
+  },
+  {
+    "prefix": "ii",
+    "body": [
+      "IO.inspect($1, label: \"$2\")"
+    ],
+    "description": "Insert IO.inspect with label",
+    "language": "elixir"
+  },
+  {
+    "prefix": "iib",
+    "body": [
+      "IO.inspect(binding(), label: \"$1\")"
+    ],
+    "description": "Insert IO.inspect with current binding",
+    "language": "elixir"
+  },
+  {
+    "prefix": "test",
+    "body": [
+      "test \"$1\" do",
+      "  $2",
+      "end"
+    ],
+    "description": "Create a new ExUnit test",
+    "language": "elixir"
+  },
+  {
+    "prefix": "desc",
+    "body": [
+      "describe \"$1\" do",
+      "  $2",
+      "end"
+    ],
+    "description": "Create a new ExUnit describe block",
+    "language": "elixir"
+  },
+  {
+    "prefix": "setup",
+    "body": [
+      "setup do",
+      "  $1",
+      "  :ok",
+      "end"
+    ],
+    "description": "Create a new ExUnit setup block",
+    "language": "elixir"
+  }
+]
