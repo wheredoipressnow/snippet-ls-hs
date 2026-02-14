@@ -9,5 +9,7 @@ This project isn't designed for a broad audience or general purpose distribution
 ## Install
 
 ```bash
-nix profile install github:wheredoipressnow/snippet-ls-hs
+devenv shell
+cabal build
+cabal install
 ```
