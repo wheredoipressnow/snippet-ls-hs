@@ -12,6 +12,7 @@ import System.Exit (exitSuccess)
 import System.IO
   ( BufferMode (NoBuffering),
     hFlush,
+    hIsEOF,
     hSetBinaryMode,
     hSetBuffering,
     stdin,
@@ -19,12 +20,16 @@ import System.IO
   )
 
 -- Read Content-Length prefixed messages
-readLSPMessage :: IO BL.ByteString
+readLSPMessage :: IO (Maybe BL.ByteString)
 readLSPMessage = do
-  headerLine <- BS.hGetLine stdin
-  let contentLength = read $ drop 16 $ BS.unpack headerLine :: Int
-  _ <- BS.hGetLine stdin
-  BL.hGet stdin contentLength
+  eof <- hIsEOF stdin
+  if eof
+    then return Nothing
+    else do
+      headerLine <- BS.hGetLine stdin
+      let contentLength = read $ drop 16 $ BS.unpack headerLine :: Int
+      _ <- BS.hGetLine stdin
+      Just <$> BL.hGet stdin contentLength
 
 -- Write Content-Length prefixed messages
 writeLSPMessage :: BL.ByteString -> IO ()
@@ -46,12 +51,14 @@ runServer snippetsFolder = do
 
 loop :: [Snippet] -> IO ()
 loop snippets = do
-  content <- readLSPMessage
-  case decode content of
-    Just msg -> case handleMessage snippets msg of
-      Reply response -> do
-        writeLSPMessage $ encode response
-        loop snippets
-      Exit -> exitSuccess
-      None -> loop snippets
-    Nothing -> loop snippets
+  mcontent <- readLSPMessage
+  case mcontent of
+    Nothing -> exitSuccess
+    Just content -> case decode content of
+      Just msg -> case handleMessage snippets msg of
+        Reply response -> do
+          writeLSPMessage $ encode response
+          loop snippets
+        Exit -> exitSuccess
+        None -> loop snippets
+      Nothing -> loop snippets
