@@ -4,8 +4,6 @@ An LSP server that provides code snippet completions. Ported to Haskell from my 
 
 This project isn't designed for a broad audience or general purpose distribution. It is public simply to make it easy to install and use across multiple machines (read: work laptop) without extra friction.
 
-> **WIP:** Snippets are currently hardcoded. `SNIPPETS_PATH` is not yet wired up.
-
 ## Install
 
 ```bash
@@ -13,3 +11,11 @@ devenv shell
 cabal build
 cabal install
 ```
+
+## Usage
+
+```bash
+snippet-ls-hs /path/to/snippets
+```
+
+Snippet files are JSON arrays placed in the snippets directory (see `snippets/elixir.json` for my Elixir snippets).
