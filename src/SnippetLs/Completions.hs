@@ -1,65 +1,43 @@
 module SnippetLs.Completions
-  ( snippets,
-    toCompletionItem,
-    handleMessage,
+  ( handleMessage,
+    loadSnippets,
   )
 where
 
 import Data.Aeson
   ( ToJSON (toJSON),
     Value (Bool, Null, Number),
+    eitherDecodeFileStrict,
     object,
   )
 import Data.Text qualified as T
 import SnippetLs.Types
+  ( Action (..),
+    Message (Message, method, msgId),
+    Snippet,
+    body,
+    description,
+    prefix,
+  )
+import System.Directory (listDirectory)
+import System.FilePath (takeExtension, (</>))
+import System.IO (hPutStrLn, stderr)
 
--- Hardcoded snippets
-snippets :: [Snippet]
-snippets =
-  [ Snippet
-      "exl"
-      [ "IO.inspect(\"---------------------------------------\")",
-        "IO.inspect(${1}, label: \"${2}\")",
-        "IO.inspect(\"---------------------------------------\")"
-      ]
-      "Insert IO.inspect surrounded by decorative border"
-      (Just "elixir"),
-    Snippet
-      "ii"
-      ["IO.inspect($1, label: \"$2\")"]
-      "Insert IO.inspect with label"
-      (Just "elixir"),
-    Snippet
-      "iib"
-      ["IO.inspect(binding(), label: \"$1\")"]
-      "Insert IO.inspect with current binding"
-      (Just "elixir"),
-    Snippet
-      "test"
-      [ "test \"$1\" do",
-        "  $2",
-        "end"
-      ]
-      "Create a new ExUnit test"
-      (Just "elixir"),
-    Snippet
-      "desc"
-      [ "describe \"$1\" do",
-        "  $2",
-        "end"
-      ]
-      "Create a new ExUnit describe block"
-      (Just "elixir"),
-    Snippet
-      "setup"
-      [ "setup do",
-        "  $1",
-        "  :ok",
-        "end"
-      ]
-      "Create a new ExUnit setup block"
-      (Just "elixir")
-  ]
+loadSnippets :: FilePath -> IO [Snippet]
+loadSnippets dir = do
+  files <- listDirectory dir
+  let jsonFiles = filter (\f -> takeExtension f == ".json") files
+  result <- mapM loadFile jsonFiles
+  return $ concat [s | Right s <- result]
+  where
+    loadFile :: FilePath -> IO (Either String [Snippet])
+    loadFile file = do
+      res <- eitherDecodeFileStrict (dir </> file)
+      case res of
+        Left err -> do
+          hPutStrLn stderr $ "Warning: failed to parse " <> file <> ": " <> err
+          return (Right [])
+        Right ss -> return (Right ss)
 
 -- Convert snippet to completion item
 toCompletionItem :: Snippet -> Value
@@ -73,8 +51,8 @@ toCompletionItem s =
     ]
 
 -- Handle requests
-handleMessage :: Message -> Action
-handleMessage msg = case method msg of
+handleMessage :: [Snippet] -> Message -> Action
+handleMessage snippets msg = case method msg of
   Just "initialize" ->
     Reply $
       Message

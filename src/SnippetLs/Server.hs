@@ -6,8 +6,8 @@ where
 import Data.Aeson (decode, encode)
 import Data.ByteString.Char8 qualified as BS
 import Data.ByteString.Lazy.Char8 qualified as BL
-import SnippetLs.Completions (handleMessage)
-import SnippetLs.Types (Action (..))
+import SnippetLs.Completions (handleMessage, loadSnippets)
+import SnippetLs.Types (Action (..), Snippet)
 import System.Exit (exitSuccess)
 import System.IO
   ( BufferMode (NoBuffering),
@@ -35,22 +35,23 @@ writeLSPMessage msg = do
   hFlush stdout
 
 -- Main server loop
-runServer :: IO ()
-runServer = do
+runServer :: FilePath -> IO ()
+runServer snippetsFolder = do
+  snippets <- loadSnippets snippetsFolder
   hSetBuffering stdin NoBuffering
   hSetBuffering stdout NoBuffering
   hSetBinaryMode stdin True
   hSetBinaryMode stdout True
-  loop
+  loop snippets
 
-loop :: IO ()
-loop = do
+loop :: [Snippet] -> IO ()
+loop snippets = do
   content <- readLSPMessage
   case decode content of
-    Just msg -> case handleMessage msg of
+    Just msg -> case handleMessage snippets msg of
       Reply response -> do
         writeLSPMessage $ encode response
-        loop
+        loop snippets
       Exit -> exitSuccess
-      None -> loop
-    Nothing -> loop
+      None -> loop snippets
+    Nothing -> loop snippets
