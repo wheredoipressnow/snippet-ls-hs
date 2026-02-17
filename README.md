@@ -19,3 +19,17 @@ snippet-ls-hs /path/to/snippets
 ```
 
 Snippet files are JSON arrays placed in the snippets directory (see `snippets/elixir.json` for my Elixir snippets).
+
+## Helix Configuration
+
+Add the language server in the `language.toml`:
+
+```toml
+[language-server.snippet-ls]
+command = "<path to snippet-ls-hs executable>"
+args = ["<path to snippets>"]
+
+[[language]]
+name = "elixir"
+language-servers = ["elixir-ls", "snippet-ls"]
+```
