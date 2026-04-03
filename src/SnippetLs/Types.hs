@@ -10,14 +10,15 @@ where
 import Data.Aeson
   ( FromJSON (parseJSON),
     ToJSON (toJSON),
-    Value (Null),
+    Value,
     object,
     withObject,
     (.:),
     (.:?),
   )
+import Data.Aeson qualified as Aeson
 import Data.Text qualified as T
-import GHC.Generics
+import GHC.Generics (Generic)
 
 -- Core types
 data Snippet = Snippet
@@ -38,7 +39,7 @@ data Action = Reply Message | Exit | None
 -- LSP Message envelope
 data Message = Message
   { jsonrpc :: T.Text,
-    msgId :: Maybe Int,
+    msgId :: Maybe Aeson.Value,
     method :: Maybe T.Text,
     params :: Maybe Value,
     result :: Maybe Value
@@ -57,14 +58,8 @@ instance FromJSON Message where
 instance ToJSON Message where
   toJSON (Message rpc mid meth par res) =
     object $
-      filter
-        (notNull . snd)
-        [ ("jsonrpc", toJSON rpc),
-          ("id", toJSON mid),
-          ("method", toJSON meth),
-          ("params", toJSON par),
-          ("result", toJSON res)
-        ]
-    where
-      notNull Null = False
-      notNull _ = True
+      [("jsonrpc", toJSON rpc)]
+        <> foldMap (\x -> [("id", toJSON x)]) mid
+        <> foldMap (\x -> [("method", toJSON x)]) meth
+        <> foldMap (\x -> [("params", toJSON x)]) par
+        <> foldMap (\x -> [("result", toJSON x)]) res
